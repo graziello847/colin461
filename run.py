@@ -342,7 +342,7 @@ async def execute_uprot(request: Request,user_input = Form(...),PHPSESSID: str =
         }
         status = await generate_uprot_txt(user_input,cookies,client)
     if status == True:
-        response = static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/doneokdone'})
+        return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/doneokdone'})
     elif status == False:
         return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/tryagaindumb'})
 
