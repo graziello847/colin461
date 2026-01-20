@@ -146,9 +146,13 @@ async def eval_solver(stream_link,proxies, ForwardProxy, client):
         headers = random_headers.generate()
         headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
         headers["accept-language"] = 'en-US,en;q=0.5'
-        response = await client.get( ForwardProxy + stream_link,  allow_redirects=True, timeout=30, headers = headers, proxies = proxies, impersonate = "chrome124")
-        logger.debug("Eval:",response.status_code)
-        soup = BeautifulSoup(response.text, "lxml",parse_only=SoupStrainer("script"))
+        if len(stream_link)  <= 200:
+            response = await client.get( ForwardProxy + stream_link,  allow_redirects=True, timeout=30, headers = headers, proxies = proxies, impersonate = "chrome124")
+            text = response.text
+            logger.debug("Eval:",response.status_code)
+        else:
+            text = stream_link
+        soup = BeautifulSoup(text, "lxml",parse_only=SoupStrainer("script"))
         script_all = soup.find_all("script")
         for i in script_all:
             if detect(i.text):
@@ -156,6 +160,8 @@ async def eval_solver(stream_link,proxies, ForwardProxy, client):
                 if "xdrop" in stream_link:
                      pattern = r'MDCore.wurl ?= ?"(.*?)"'
                      
+                elif 'turbovid' in stream_link:
+                    pattern = r'sources:\s*\["([^"]+)"'
                 else:
                     pattern = r'file:"(.*?)"'
                 match = re.search(pattern, unpacked_code)

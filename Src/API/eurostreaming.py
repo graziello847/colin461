@@ -127,7 +127,7 @@ async def scraping_links(atag,MFP,MFP_CREDENTIALS,client,streams,language):
         pattern = r'<a\s+href="([^"]+)"[^>]*rel="noopener"[^>]*>DeltaBit</a>'
         href = await get_host_link(pattern,atag,client)
         try:
-            streams = await deltabit(href,client,streams,"Eurostreaming",proxies,ForwardProxy,language)
+            streams = await deltabit(href,client,streams,"Eurostreaming",proxies,ForwardProxy,language,'Deltabit')
         except Exception as e:
             pattern = r'<a\s+href="([^"]+)"[^>]*rel="noopener"[^>]*>MixDrop</a>'
             href = await get_host_link(pattern,atag,client)
@@ -145,7 +145,7 @@ async def scraping_links(atag,MFP,MFP_CREDENTIALS,client,streams,language):
         try:
             pattern = r'<a\s+href="([^"]+)"[^>]*rel="noopener"[^>]*>DeltaBit</a>'
             href = await get_host_link(pattern,atag,client)
-            streams = await deltabit(href,client,streams,"Eurostreaming",proxies,ForwardProxy,language)
+            streams = await deltabit(href,client,streams,"Eurostreaming",proxies,ForwardProxy,language,'Deltabit')
             return streams
         except Exception as e:
             return streams
@@ -156,6 +156,14 @@ async def scraping_links(atag,MFP,MFP_CREDENTIALS,client,streams,language):
             if match:
                 href_value = match.group(1)
                 streams = await get_maxstream(href_value,streams,language,client)
+            return streams
+        except Exception as e:
+            return streams
+    if 'Deltabit' not in atag and 'Mixdrop' not in atag and 'Maxstream' not in atag and 'Turbovid' in atag:
+        try:
+            pattern = r'<a\s+href="([^"]+)"[^>]*rel="noopener"?[^>]*>Turbovid</a>'
+            href = await get_host_link(pattern,atag,client)
+            streams = await deltabit(href,client,streams,"Eurostreaming",proxies,ForwardProxy,language,'Turbovid')
             return streams
         except Exception as e:
             return streams
@@ -244,7 +252,7 @@ async def eurostreaming(streams,id,client,MFP,MFP_CREDENTIALS):
 async def test_euro():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        results = await eurostreaming({'streams': []},"tt0460681:11:1",client,"0",['test','test'])
+        results = await eurostreaming({'streams': []},"tt1520211:1:1",client,"0",['test','test'])
         print(results)
 
 

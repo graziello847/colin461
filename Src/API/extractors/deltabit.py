@@ -5,6 +5,7 @@ import re
 import time
 import logging
 from Src.Utilities.config import setup_logging
+from Src.Utilities.eval import eval_solver
 level = config.LEVEL
 logger = setup_logging(level)
 Icon = config.Icon
@@ -15,9 +16,8 @@ random_headers = Headers()
 
 
 
-async def deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,language):
+async def deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,language,extractor):
     """Extract Deltabit URL."""
-    i = 0
     #Set up some headers
     headers = random_headers.generate()
     headers2 = random_headers.generate()
@@ -46,25 +46,34 @@ async def deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,langua
         name = input.get('name')
         value = input.get('value')
         data[name] = value 
-    data['imhuman'] = ''
+    if extractor == 'Deltabit':
+        imhuman = ''
+    elif extractor == 'Turbovid':
+        imhuman = 'Proceed+to+video'
+    data['imhuman'] = imhuman
     data['referer']= page_url
-    #We need to wait 2.5 seconds or the request will fail
-    time.sleep(2.5)
-    
+    #We need to wait 2.5/5 seconds or the request will fail
+    if extractor == 'Deltabit':
+        time.sleep(2.5)
+    elif extractor == 'Turbovid':
+        time.sleep(5)
     
     fname = data['fname']
     #Request to the deltabit link
     response = await client.post(ForwardProxy + page_url, data = data, headers = headers, proxies = proxies)
-    link = re.findall(r'sources:\s*\["([^"]+)"', response.text, re.DOTALL)
+    if extractor == 'Deltabit':
+        link = re.findall(r'sources:\s*\["([^"]+)"', response.text, re.DOTALL)
+        if link:
+            link = link[0]
+    elif extractor == 'Turbovid':
+        link = await eval_solver(response.text,proxies, ForwardProxy, client)
     if not link:
+        i = 0
         if not i >= 3:
-            page_url = 'https://deltabit.co/q4r8w4assff4'
-            link,fname = await deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,language)
+            link,fname = await deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,language,extractor)
             i +=1
-    else:
-        link = link[0]
     if link:
-        streams['streams'].append({'name': f"{Name}{language}",'title': f'{Icon}{site_name}\n▶️ Deltabit\n{fname}', 'url': link, 'behaviorHints': {'bingeGroup': f'{site_name.lower()}'}})
+        streams['streams'].append({'name': f"{Name}{language}",'title': f'{Icon}{site_name}\n▶️ {extractor}\n{fname}', 'url': link, 'behaviorHints': {'bingeGroup': f'{site_name.lower()}'}})
 
     
     return streams
@@ -76,7 +85,7 @@ async def deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,langua
 async def test_deltabit():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        results = await deltabit("https://deltabit.co/a54ehb8w42pe",client,{'streams': []},'Deltabit', {},"","")
+        results = await deltabit("https://turbovid.me/squc5gdzptgw",client,{'streams': []},'Deltabit', {},"","",'Turbovid')
         print(results)
 if __name__ == "__main__":
     import asyncio
