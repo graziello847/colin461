@@ -98,7 +98,7 @@ async def real_page(safego_url,client):
         soup = BeautifulSoup(response.text,'lxml', parse_only=SoupStrainer('a'))
         if len(soup)>= 1:
             return soup.a['href']
-        else:
+        elif 'The requested URL was not found on this server.' not in response.text:
             logger.info("Getting numbers")
             numbers,cookies = await get_numbers(safego_url,client)
             numbers = convert_numbers(numbers)
@@ -117,8 +117,15 @@ async def get_host_link(pattern,atag,client):
     headers = random_headers.generate()
     if match:
         href_value = match.group(1)
-        response = await client.head(ForwardProxy + href_value, headers={**headers, 'Range': 'bytes=0-0'}, proxies = proxies)
-        href_value = response.url
+        k = 0
+        while 'safego' not in href_value:
+            response = await client.get(ForwardProxy + href_value, headers={**headers, 'Range': 'bytes=0-0'}, proxies = proxies)
+            href_value = response.url
+            if '%20' in href_value:
+                href_value = href_value.replace('%20','')
+            k+=1
+            if k == 5:
+                break
         href = await real_page(href_value,client)
         return href
 async def scraping_links(atag,MFP,MFP_CREDENTIALS,client,streams,language):
@@ -188,8 +195,8 @@ async def episodes_find(description,season,episode,MFP,MFP_CREDENTIALS,client,st
     return streams
 async def search(showname,date,season,episode,MFP,MFP_CREDENTIALS,client,streams):
     headers = random_headers.generate()
-
-    response = await client.get(ForwardProxy + f"{ES_DOMAIN}/wp-json/wp/v2/search?search={quote(showname)}&_fields=id", proxies = proxies, headers = headers)
+    
+    response = await client.get(ForwardProxy + f"{ES_DOMAIN}/wp-json/wp/v2/search?search={quote(showname.replace("'"," "))}&_fields=id", proxies = proxies, headers = headers)
     results = response.json()
     for i in results:
         response = await client.get(ForwardProxy + f"{ES_DOMAIN}/wp-json/wp/v2/posts/{i['id']}?_fields=content,title", proxies = proxies, headers = headers)
@@ -252,7 +259,7 @@ async def eurostreaming(streams,id,client,MFP,MFP_CREDENTIALS):
 async def test_euro():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        results = await eurostreaming({'streams': []},"tt1520211:1:1",client,"0",['test','test'])
+        results = await eurostreaming({'streams': []},"tt12324366:2:2",client,"0",['test','test'])
         print(results)
 
 
