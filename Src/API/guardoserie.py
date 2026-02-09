@@ -10,6 +10,7 @@ from Src.API.extractors.loadm import loadm
 from Src.API.extractors.dropload import dropload
 import logging
 from Src.Utilities.config import setup_logging
+from Src.Utilities.update_config import update_site
 level = config.LEVEL
 import json
 import random
@@ -32,12 +33,21 @@ if GO_PROXY == "1":
             "https": proxy
         }   
 GO_ForwardProxy = config.GO_ForwardProxy
+
 if GO_ForwardProxy == "1":
     ForwardProxy = env_vars.get('ForwardProxy')
 else:
     ForwardProxy = ""
 
-
+async  def new_domain(url,data,headers,proxies,ForwardProxy,client):
+    url = url.split('/wp-admin')[0]
+    headers['Origin'] = url
+    headers['Referer'] = f'{url}/'
+    response = await client.post(ForwardProxy + f'{url}/wp-admin/admin-ajax.php', data = data, headers = headers, proxies = proxies)
+    if response.status_code != 200:
+            logger.warning(f"Guardoserie Failed to fetch search results: {response.status_code}")
+    result = await update_site(client,['guardoserie_2','Guardoserie'])
+    return response.text
 
 async def get_player(page_link,MFP,MFP_CREDENTIALS,client, headers, streams):
     response = await client.get(ForwardProxy + page_link, headers= headers, proxies = proxies)
@@ -63,9 +73,13 @@ async def search(showname,date,season,episode,MFP, MFP_CREDENTIALS,ismovie,clien
     showname = quote(showname)
     data = f's={showname}&action=searchwp_live_search&swpengine=default&swpquery={showname}'
     response = await client.post(ForwardProxy + f'{GO_DOMAIN}/wp-admin/admin-ajax.php', data = data, headers = headers, proxies = proxies)
+    text = response.text
     if response.status_code != 200:
-            logger.warning(f"Guardoserie Failed to fetch search results: {response.status_code}")
-    soup = BeautifulSoup(response.text,'lxml', parse_only=  SoupStrainer('a', class_='ss-title'))
+            if response.status_code == 400:
+                text = await new_domain(response.url,data,headers,proxies,ForwardProxy,client) 
+            if len(text) < 10:
+                logger.warning(f"Guardoserie Failed to fetch search results: {response.status_code}")
+    soup = BeautifulSoup(text,'lxml', parse_only=  SoupStrainer('a', class_='ss-title'))
     a_tags = soup.find_all('a')
     for a in a_tags:
         href = a['href']

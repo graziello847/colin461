@@ -114,7 +114,7 @@ async def toonitalia(streams,id,client,MFP,MFP_CREDENTIALS):
 async def test_toonitalia():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        results = await toonitalia({'streams': []},"tt1466074:1:1",client,"0",['test','test'])
+        results = await toonitalia({'streams': []},"tt0096697:1:1",client,"0",['test','test'])
         print(results)
 
         

@@ -19,6 +19,7 @@ from Src.API.realtime import search_catalog as realtime
 from Src.API.realtime import meta_catalog as meta_catalog_realtime
 from Src.API.realtime import realtime as streams_realtime
 from Src.Utilities.dictionaries import STREAM,extra_sources,provider_map
+from Src.Utilities.update_config import update_all_sites
 from Src.API.epg import tivu, tivu_get,epg_guide,convert_bho_1,convert_bho_2,convert_bho_3
 from Src.API.extractors.uprot import get_uprot_numbers,generate_uprot_txt
 import logging
@@ -345,6 +346,16 @@ async def execute_uprot(request: Request,user_input = Form(...),PHPSESSID: str =
         return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/doneokdone'})
     elif status == False:
         return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/tryagaindumb'})
+
+@app.get('/update')
+async def update(request: Request):
+    async with AsyncSession(proxies = proxies) as client:
+        result = await update_all_sites(client)
+        if result:
+            return JSONResponse(content={"message": "200"})
+        if not result:
+            return JSONResponse(content={"message": "Failed"})
+
 
 if __name__ == '__main__':
     import uvicorn

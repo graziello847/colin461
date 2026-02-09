@@ -5,7 +5,6 @@ import logging
 with open('config.json') as f:
     # Load JSON data from file
     config = json.load(f)
-
 # Accessing SC_DOMAIN
 SITE = config["Siti"]
 SC_DOMAIN = SITE["StreamingCommunity"]['url']

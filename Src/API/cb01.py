@@ -172,14 +172,14 @@ async def series_search_streams(text,search_text,response_text,headers,season,ep
             if match:
                 streams = await get_maxstream(match.group(2),streams,client)
     else:
-        match = re.search(rf'{season}&#215;{episode}\s*&#8211;\s*<a[^>]*href="[^"]*"[^>]*>[^<]*</a>\s&#8211; <a[^>]*href="[^"]*',response_text)
+        match = re.search(rf'{season}&#215;{episode}\s*&#8211;\s*<a[^>]*href="[^"]*"[^>]*>[^<]*</a>\s&#8211; <a[^>]*href="[^"]*.*</a>',response_text)
         if match:
             links = match.group(0)
             soup = BeautifulSoup(links,'lxml',parse_only=SoupStrainer('a'))
             host_links = soup.find_all('a')
             mixdrop_real_link = await get_stayonline(host_links[1]['href'],client)
             status = False
-            #streams,status = await mixdrop(mixdrop_real_link,client,MFP,MFP_CREDENTIALS,streams,"CB01",proxies,ForwardProxy,"")  
+            streams,status = await mixdrop(mixdrop_real_link,client,MFP,MFP_CREDENTIALS,streams,"CB01",proxies,ForwardProxy,"")  
             if status == False:
                 streams = await get_maxstream(host_links[0]['href'],streams,client)
     return streams
@@ -255,7 +255,7 @@ async def cb01(streams,id,MFP,MFP_CREDENTIALS,client):
 async def test_animeworld():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        test_id = "tt0158552:1:2"  # This is an example ID format
+        test_id = "tt12324366:2:2"  # This is an example ID format
         MFP = "0"
         results = await cb01({'streams': []},test_id,MFP,['test','test'],client)
         print(results)
