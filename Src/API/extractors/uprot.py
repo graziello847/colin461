@@ -32,7 +32,7 @@ else:
 
 url = 'https://uprot.net/msf/r4hcq47tarq8'
 headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0',
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -50,7 +50,8 @@ headers = {
     }
 async def get_uprot_numbers(client):
     try:
-        response = await client.post(ForwardProxy + url, headers=headers, proxies = proxies)
+        response = await client.post(ForwardProxy + url, headers=headers, proxies = proxies, impersonate = 'chrome')
+
         set_cookie = response.headers.get('set-cookie')
         parts = set_cookie.split(';')[0].split('=')
         key = parts[0]
@@ -63,14 +64,14 @@ async def get_uprot_numbers(client):
         img = soup.find('img')['src']
         return img,cookies
     except Exception as e:
-        logger.info(f'Uprot failed  to generate numberers/cookies: {e}')
+        logger.info(f'Uprot failed  to generate numbers/cookies: {e}')
         return None,None
 async def generate_uprot_txt(numbers,cookies,client):
     try:
         data = {
         'captcha': str(numbers),
         }
-        response = await client.post(ForwardProxy + url, cookies=cookies, headers=headers, data=data, proxies = proxies)
+        response = await client.post(ForwardProxy + url, cookies=cookies, headers=headers, data=data, proxies = proxies, impersonate = 'chrome')
         if response.status_code != 200:
             return False
         set_cookie = response.headers.get('set-cookie')
@@ -91,7 +92,6 @@ async def generate_uprot_txt(numbers,cookies,client):
 async def get_maxstream_link(text,client):
     soup = BeautifulSoup(text,'lxml',parse_only=SoupStrainer('a'))
     a_tags = soup.find_all('a')
-
     max_stream = None
     for tag in a_tags:
         if 'C O N T I N U E' in tag.text.upper():
