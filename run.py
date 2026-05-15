@@ -360,13 +360,13 @@ async def execute_uprot(request: Request,user_input = Form(...),PHPSESSID: str =
         'request': request,
         'image_url': 'https://tinyurl.com/doneokdone'
         }
-        return static.TemplateResponse(name='uprot.html',context=context)
+        return static.TemplateResponse(name='uprot.html',context=context,request=request)
     elif status == False:
         context = {
             'request': request,
             'image_url': 'https://tinyurl.com/tryagaindumb'
         }
-        return static.TemplateResponse('uprot.html',context=context)
+        return static.TemplateResponse('uprot.html',context=context,request=request)
 
 @app.get('/update')
 async def update(request: Request):
