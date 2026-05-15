@@ -343,7 +343,7 @@ async def uprot(request: Request):
         'image_url': image
     }
     
-    response = static.TemplateResponse('uprot.html',context=context)
+    response = static.TemplateResponse(name='uprot.html',context=context)
     if cookies:
         response.set_cookie(key='PHPSESSID', value=cookies.get('PHPSESSID'),httponly=True)
 
@@ -360,7 +360,7 @@ async def execute_uprot(request: Request,user_input = Form(...),PHPSESSID: str =
         'request': request,
         'image_url': 'https://tinyurl.com/doneokdone'
         }
-        return static.TemplateResponse('uprot.html',context=context)
+        return static.TemplateResponse(name='uprot.html',context=context)
     elif status == False:
         context = {
             'request': request,
