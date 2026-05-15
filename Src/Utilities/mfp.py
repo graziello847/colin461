@@ -22,7 +22,6 @@ async def build_mfp(MFP_CREDENTIALS,url,host,client):
     MFP_url = MFP_CREDENTIALS[0]
     MFP_password = MFP_CREDENTIALS[1]
     url_mfp = f'{MFP_url}/extractor/video?api_password={MFP_password}&d={url}&host={host}&redirect_stream=false'
-    print(url_mfp)
     #To build pieces together
     url_mfp = await transform_mfp(url_mfp,client)
     return url_mfp
