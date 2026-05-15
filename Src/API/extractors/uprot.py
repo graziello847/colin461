@@ -121,10 +121,10 @@ async def bypass_uprot(client,link):
         if 'msfi'  not in link:
             if 'msf' in link:
                 link = link.replace('msf','mse')
-            headers = random_headers.generate()
-            headers['Origin'] = url.split('msf')[0]
-            headers['Referer'] = url
-            response = await client.get(ForwardProxy + link, headers=headers, impersonate = 'chrome', proxies = proxies)
+            headers2 = random_headers.generate()
+            headers2['Origin'] = url.split('msf')[0]
+            headers2['Referer'] = url
+            response = await client.get(ForwardProxy + link, headers=headers2, impersonate = 'chrome', proxies = proxies)
             if response.status_code != 403:
                 max_stream = await find_link(response.text,client)
             else:
@@ -140,6 +140,7 @@ async def bypass_uprot(client,link):
                 cookies = json.loads(parts[0].replace("'", '"'))
                 data = json.loads(parts[1].replace("'", '"'))
             response = await client.post(ForwardProxy + link, cookies=cookies, headers=headers, data =data, impersonate = 'chrome', proxies = proxies)
+
             if response.status_code != 403:
                 max_stream = await get_maxstream_link(response.text,client)
         
