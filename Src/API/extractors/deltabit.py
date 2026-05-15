@@ -66,7 +66,7 @@ async def deltabit(page_url,client,streams,site_name,proxies,ForwardProxy,langua
         if link:
             link = link[0]
     elif extractor == 'Turbovid':
-        link = await eval_solver(response.text,proxies, ForwardProxy, client)
+        link = await eval_solver(response.text,proxies, ForwardProxy, client,r'sources:\s*\["([^"]+)"')
     if not link:
         i = 0
         if not i >= 3:

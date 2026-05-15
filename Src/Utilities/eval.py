@@ -141,7 +141,7 @@ class UnpackingError(Exception):
 random_headers = Headers()
 
 
-async def eval_solver(stream_link,proxies, ForwardProxy, client):
+async def eval_solver(stream_link,proxies, ForwardProxy, client,pattern):
     try:
         headers = random_headers.generate()
         headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
@@ -157,13 +157,6 @@ async def eval_solver(stream_link,proxies, ForwardProxy, client):
         for i in script_all:
             if detect(i.text):
                 unpacked_code = unpack(i.text)
-                if "xdrop" in stream_link:
-                     pattern = r'MDCore.wurl ?= ?"(.*?)"'
-                     
-                elif 'turbovid' in stream_link:
-                    pattern = r'sources:\s*\["([^"]+)"'
-                else:
-                    pattern = r'file:"(.*?)"'
                 match = re.search(pattern, unpacked_code)
                 if match:
                     m3u8_url = match.group(1)

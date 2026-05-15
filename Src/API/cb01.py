@@ -255,7 +255,7 @@ async def cb01(streams,id,MFP,MFP_CREDENTIALS,client):
 async def test_animeworld():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        test_id = "tt12324366:2:2"  # This is an example ID format
+        test_id = "tt11378946"  # This is an example ID format
         MFP = "0"
         results = await cb01({'streams': []},test_id,MFP,['test','test'],client)
         print(results)

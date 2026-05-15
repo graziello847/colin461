@@ -5,7 +5,8 @@ import logging
 import  Src.Utilities.config as config
 from Src.Utilities.config import setup_logging
 from Src.Utilities.loadenv import load_env  
-
+from fake_headers import Headers
+random_headers = Headers()
 UT_PROXY = config.UT_PROXY
 UT_ForwardProxy = config.UT_ForwardProxy
 level = config.LEVEL
@@ -31,6 +32,8 @@ else:
     ForwardProxy = ""
 
 url = 'https://uprot.net/msf/r4hcq47tarq8'
+
+
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -118,8 +121,14 @@ async def bypass_uprot(client,link):
         if 'msfi'  not in link:
             if 'msf' in link:
                 link = link.replace('msf','mse')
+            headers = random_headers.generate()
+            headers['Origin'] = url.split('msf')[0]
+            headers['Referer'] = url
             response = await client.get(ForwardProxy + link, headers=headers, impersonate = 'chrome', proxies = proxies)
-            max_stream = await find_link(response.text,client)
+            if response.status_code != 403:
+                max_stream = await find_link(response.text,client)
+            else:
+                logger.info("Uprot blocked the request: 403")
         else:
             if 'mse' in link:
                 link = link.replace('mse','msf')
@@ -131,7 +140,12 @@ async def bypass_uprot(client,link):
                 cookies = json.loads(parts[0].replace("'", '"'))
                 data = json.loads(parts[1].replace("'", '"'))
             response = await client.post(ForwardProxy + link, cookies=cookies, headers=headers, data =data, impersonate = 'chrome', proxies = proxies)
-            max_stream = await get_maxstream_link(response.text,client)
+            if response.status_code != 403:
+                max_stream = await get_maxstream_link(response.text,client)
+        
+        if response.status_code == 403:
+            max_stream = False
+        
         return max_stream
         
     except Exception as e:

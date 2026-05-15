@@ -14,6 +14,8 @@ from Src.API.animeworld import animeworld
 from Src.API.guardaflix import guardaflix
 from Src.API.guardoserie import guardoserie
 from Src.API.eurostreaming import eurostreaming
+from  Src.API.onlineserietv import onlineserietv
+from  Src.API.vidxgoalta import vidxgoalta
 from Src.API.toonitalia import toonitalia
 from Src.API.realtime import search_catalog as realtime
 from Src.API.realtime import meta_catalog as meta_catalog_realtime
@@ -56,6 +58,8 @@ GF = config.GF
 GO = config.GO
 RT = config.RT
 TI = config.TI
+OST = config.OST
+VD = config.VD
 HOST = config.HOST
 PORT = int(config.PORT)
 if env_vars.get('PORT_ENV'):
@@ -309,7 +313,7 @@ async def addon_stream(request: Request,config, type, id,):
                 if provider_maps['GUARDASERIE'] == "1" and GS == "1":
                     streams = await guardaserie(streams,id,client)
                 if provider_maps['GUARDAHD'] == "1" and GHD == "1":
-                    streams = await guardahd(streams,id,client)
+                    streams = await guardahd(streams,id,client,MFP,MFP_CREDENTIALS)
                 if provider_maps['EUROSTREAMING'] == "1" and ES == "1":
                     streams = await eurostreaming(streams,id,client,MFP,MFP_CREDENTIALS)
                 if provider_maps['GUARDAFLIX'] == "1" and GF == "1":
@@ -320,6 +324,10 @@ async def addon_stream(request: Request,config, type, id,):
                     streams = await streams_realtime(streams,id,client)
                 if provider_maps['TOONITALIA'] == '1' and TI == '1':
                     streams = await toonitalia(streams,id,client,MFP,MFP_CREDENTIALS)
+                if provider_maps['ONLINESERIETV'] == '1' and OST == '1':
+                    streams = await onlineserietv(streams,id,client)
+                if provider_maps['VIDXGO'] == '1' and VD == '1':
+                    streams = await vidxgoalta(streams,id,client)
             return respond_with(streams)
         if not streams['streams']:
             raise HTTPException(status_code=404)
@@ -330,7 +338,12 @@ async def addon_stream(request: Request,config, type, id,):
 async def uprot(request: Request):
     async with AsyncSession(proxies = proxies) as client:
         image, cookies = await get_uprot_numbers(client)
-    response = static.TemplateResponse('uprot.html',{'request':request,"image_url": image})
+    context = {
+        'request': request,
+        'image_url': image
+    }
+    
+    response = static.TemplateResponse('uprot.html',context=context)
     if cookies:
         response.set_cookie(key='PHPSESSID', value=cookies.get('PHPSESSID'),httponly=True)
 
@@ -343,14 +356,23 @@ async def execute_uprot(request: Request,user_input = Form(...),PHPSESSID: str =
         }
         status = await generate_uprot_txt(user_input,cookies,client)
     if status == True:
-        return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/doneokdone'})
+        context = {
+        'request': request,
+        'image_url': 'https://tinyurl.com/doneokdone'
+        }
+        return static.TemplateResponse('uprot.html',context=context)
     elif status == False:
-        return static.TemplateResponse('uprot.html',{'request':request,"image_url": 'https://tinyurl.com/tryagaindumb'})
+        context = {
+            'request': request,
+            'image_url': 'https://tinyurl.com/tryagaindumb'
+        }
+        return static.TemplateResponse('uprot.html',context=context)
 
 @app.get('/update')
 async def update(request: Request):
     async with AsyncSession(proxies = proxies) as client:
         result = await update_all_sites(client)
+        print(result)
         if result:
             return JSONResponse(content={"message": "200"})
         if not result:

@@ -180,7 +180,7 @@ CONFIGURE = """
             <img src="https://creazilla-store.fra1.digitaloceanspaces.com/emojis/49647/pizza-emoji-clipart-md.png" alt="Logo">
         </div>
         <h1 class="name">Mamma Mia</h1>
-        <h2 class="version">v2.1.0</h2>
+        <h2 class="version">v2.2.0</h2>
         <div id="additionalText">
             <h2>This addon provides Movie, Series, Anime, and Live TV HTTPS Streams.<br> https://github.com/UrloMythus/MammaMia/</h2>
         </div>
@@ -220,6 +220,16 @@ CONFIGURE = """
                 </label>
             </div>
             <div class="provider-group">
+                <label for="onlineserietv" class="provider-label">
+                    <input type="checkbox" id="onlineserietv"> OnlineSerieTV
+                </label>
+            </div>
+            <div class="provider-group">
+                <label for="vidxgo" class="provider-label">
+                    <input type="checkbox" id="vidxgo"> Vidxgo
+                </label>
+            </div>
+            <div class="provider-group">
                 <label for="streamingcommunity" class="provider-label">
                     <input type="checkbox" id="streamingcommunity"> StreamingCommunity 🕵️‍♂️
                     <input type="checkbox" id="streamingcommunity_mfp" checked> 🕵️‍♂️
@@ -232,7 +242,7 @@ CONFIGURE = """
             </div>
             <div class="provider-group">
                 <label for="realtime" class="provider-label">
-                    <input type="checkbox" id="toonitalia"> Toonitalia
+                    <input type="checkbox" id="toonitalia"> Toonitalia 🕵️‍♂️
                 </label>
             </div>
             <div class="provider-group">
@@ -287,6 +297,8 @@ CONFIGURE = """
             "eurostreaming": "ES",
             "realtime": "RT",
             "toonitalia": "TI",
+            "onlineserietv": "OST",
+            "vidxgo": "VD",
             "streamingcommunity_mfp": "SC_MFP",
             "mediaflowproxy": "MFP"
         };

@@ -4,7 +4,8 @@ import re
 import Src.Utilities.config as config
 from fake_headers import Headers  
 from Src.Utilities.loadenv import load_env  
-from Src.API.extractors.supervideo import supervideo
+from Src.API.extractors.streamhg import streamhg
+from Src.API.extractors.mixdrop import mixdrop
 import json, random
 import logging
 from Src.Utilities.config import setup_logging
@@ -41,24 +42,27 @@ async def search(clean_id,client):
             logger.warning(f"GuardaHD Failed to fetch search results: {response.status_code}")
     soup = BeautifulSoup(response.text,'lxml',parse_only=SoupStrainer('li'))
     li_tags = soup.find_all('li')
+    results = {}
     for tag in li_tags:
-        if tag.get('data-link'):
-            if 'supervideo' in tag.get('data-link'):
-                href = 'https:' + tag['data-link']
-                return href
-    return href
+        if tag.get('data-link') and (('mixdrop') in tag.text or ('streamhg') in tag.text):
+                results[tag.text.strip()] =   'https:' + tag['data-link']
+    return results
 
 
 
-async def guardahd(streams,id,client):
+async def guardahd(streams,id,client,MFP,MFP_CREDENTIALS):
     try:
         general = await is_movie(id)
         ismovie = general[0]
         clean_id = general[1]
         if ismovie == 0:
             return streams
-        supervideo_link = await search(clean_id,client)
-        streams = await supervideo(supervideo_link, client,streams,"GuardaHD",proxies, ForwardProxy)
+        results = await search(clean_id,client)
+        status = False
+        if 'streamhg' in results:
+            streams,status = await streamhg(results['streamhg'], client,streams,"GuardaHD",proxies, ForwardProxy)
+        if 'mixdrop' in results and not status:
+            streams,status = await mixdrop(results['mixdrop'],client,MFP,MFP_CREDENTIALS,streams,"GuardaHD",proxies,ForwardProxy,'')
         return streams
     except Exception as e:
         logger.warning(f"MammaMia: GuardaHD Failed {e}")
@@ -68,8 +72,8 @@ async def test_script():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
         # Replace with actual id, for example 'anime_id:episode' format
-        test_id = "tt7181546"  # This is an example ID format
-        results = await guardahd({'streams': []},test_id, client)
+        test_id = "tt16426418"  # This is an example ID format
+        results = await guardahd({'streams': []},test_id, client,'0','')
         print(results)
 
 if __name__ == "__main__":

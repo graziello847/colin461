@@ -44,7 +44,7 @@ async  def new_domain(url,data,headers,proxies,ForwardProxy,client):
     response = await client.post(ForwardProxy + f'{url}/wp-admin/admin-ajax.php', data = data, headers = headers, proxies = proxies)
     if response.status_code != 200:
             logger.warning(f"Guardaflix Failed to fetch search results: {response.status_code}")
-    result = update_site(client,['guardaplay','Guardaflix'])
+    result = await update_site(client,['guardaplay','Guardaflix'])
     return response.text
 
 async def get_player(page_link,MFP, MFP_CREDENTIALS,client, headers,streams):

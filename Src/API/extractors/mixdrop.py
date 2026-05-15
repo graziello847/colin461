@@ -25,7 +25,7 @@ async def mixdrop(url,client,MFP,MFP_CREDENTIALS,streams,site_name,proxies,Forwa
 
     else:
         headers = {"accept-language": "en-US,en;q=0.5"}
-        url = await eval_solver(url, proxies , ForwardProxy, client)
+        url = await eval_solver(url, proxies , ForwardProxy, client,r'MDCore.wurl ?= ?"(.*?)"')
         if url:
             url = "https:" + url
             logger.info(f"{site_name} on Mixdrop found results for the current ID")

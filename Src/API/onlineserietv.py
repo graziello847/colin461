@@ -7,10 +7,18 @@ import json, random
 import re
 from Src.Utilities.eval import eval_solver
 import urllib.parse
+from Src.API.extractors.maxstream import maxstream
+from Src.API.extractors.uprot import bypass_uprot
 OST_DOMAIN = config.OST_DOMAIN
 OST_PROXY = config.OST_PROXY
 env_vars = load_env()
 proxies = {}
+random_headers = Headers()
+import logging
+from Src.Utilities.config import setup_logging
+level = config.LEVEL
+logger = setup_logging(level)
+
 if OST_PROXY == "1":
     PROXY_CREDENTIALS = env_vars.get('PROXY_CREDENTIALS')
     proxy_list = json.loads(PROXY_CREDENTIALS)
@@ -27,25 +35,12 @@ if OST_ForwardProxy == "1":
     ForwardProxy = env_vars.get('ForwardProxy')
 else:
     ForwardProxy = ""
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.71 Mobile Safari/537.36',
-    'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.5',
-    # 'Accept-Encoding': 'gzip, deflate, br, zstd',
-    'X-Requested-With': 'XMLHttpRequest',
-    'DNT': '1',
-    'Sec-GPC': '1',
-    'Connection': 'keep-alive',
-    'Referer': f'https://onlineserietv.{OST_DOMAIN}/',
-    # 'Cookie': 'player_opt=fx',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-origin',
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache',
-}
+Name = config.Name
+Icon = config.Icon
 
 async def search(showname,date,client,ismovie,episode,season):
+    headers = random_headers.generate()
+    headers['Referer'] = f'{OST_DOMAIN}/'
     cookies = {
     'player_opt': 'fx',
     }
@@ -57,64 +52,69 @@ async def search(showname,date,client,ismovie,episode,season):
     'origin_id': '50141',
     'searchwp_live_search_client_nonce': 'undefined',
     }
-    response = await client.get(ForwardProxy + f"https://onlineserietv.{OST_DOMAIN}/wp-admin/admin-ajax.php?s={urllib.parse.quote(showname)}&action=searchwp_live_search&swpengine=default&swpquery={urllib.parse.quote(showname)}&origin_id=50141&searchwp_live_search_client_nonce=undefined", headers=headers, cookies=cookies, impersonate = "chrome124", proxies = proxies)
+    response = await client.get(ForwardProxy + f"{OST_DOMAIN}/wp-admin/admin-ajax.php?s={urllib.parse.quote(showname)}&action=searchwp_live_search&swpengine=default&swpquery={urllib.parse.quote(showname)}&origin_id=50141&searchwp_live_search_client_nonce=undefined", headers=headers, cookies=cookies, impersonate = "chrome", proxies = proxies)
     if response.status_code != 200:
-        print("IP Blocked by OnlineserieTV",response)
+        logger.info("IP Blocked by OnlineserieTV",response)
     soup = BeautifulSoup(response.text, 'lxml', parse_only=SoupStrainer('a'))
     a_tags_with_href = soup.find_all("a", href=True)
     for a_tag in a_tags_with_href:
         href = a_tag.get("href")
         if ismovie == 1:
             if "film" in href:
-                response = await client.get(ForwardProxy + href, headers=headers, impersonate = "chrome124", proxies = proxies)
+                response = await client.get(ForwardProxy + href, headers=headers, impersonate = "chrome", proxies = proxies)
                 if response.status_code != 200:
-                    print("IP Blocked by OnlineserieTV",response)
+                    logger.info("IP Blocked by OnlineserieTV",response)
                 year_match = re.search(r'Anno: <i>(\d{4})</i>', response.text)
                 year = year_match.group(1) if year_match else None
                 if year == date:
-                    pattern = r'https://uprot\.net/fxf/[^\s"<>]+'
+                    pattern = r'https://uprot\.net/msf/[^\s"<>]+'
                     match = re.search(pattern, response.text)
                     if match:
                         name = a_tag.text.replace("\t","").replace("\n","")
-                        flexy_link = match.group()
-                        return flexy_link,name
+                        maxstream_link = match.group()
+                        return maxstream_link,name
                     else:
-                        print("No flexy link found.")
+                        logger.info("No Maxstream link found.")
             else:
                 continue
         elif ismovie == 0:
             if "serietv" in href:
-                response = await client.get(ForwardProxy + href, headers=headers, impersonate = "chrome124", proxies = proxies)
+                response = await client.get(ForwardProxy + href, headers=headers, impersonate = "chrome", proxies = proxies)
                 if response.status_code != 200:
-                    print("IP Blocked by OnlineserieTV",response)
+                    logger.info("IP Blocked by OnlineserieTV",response)
                 year_match = re.search(r'Anno: <i>(\d{4})</i>', response.text)
                 year = year_match.group(1) if year_match else None
                 if year == date:
                     season = season.zfill(2)
                     episode = episode.zfill(2)
-                    if season == "0000000000000":
-                        print(True,season,episode)
-                        #pattern = rf'{season}x{episode}.*?<a href=[\'"](https://uprot\.net/fxf/[^\'"]+)|0{episode}.*?<a href=[\'"](https://uprot\.net/fxf/[^\'"]+)'
-                        pattern = rf'0{episode}.*?<a href=[\'"](https://uprot\.net/fxf/[^\'"]+)'
-                        match1 = re.findall(pattern, response.text)
-                        match = re.search(pattern, response.text)
-                        print(match)
-                    else:
-                        pattern = rf'{season}x{episode}.*?<a href=[\'"](https://uprot\.net/fxf/[^\'"]+)'
+                    pattern = rf'{season}x{episode}.*?<a href=[\'"](https://uprot\.net/msf/[^\'"]+)'
+                    match = re.search(pattern, response.text, re.DOTALL)
+                    if not match:
+                        pattern = rf'0{episode}.*?<a href=[\'"](https://uprot\.net/msf/[^\'"]+)'
                         match = re.search(pattern, response.text, re.DOTALL)
                     if match:
                         name = a_tag.text.replace("\t","").replace("\n","")
-                        flexy_link = match.group(1)
-                        print(match,flexy_link)
-                        return flexy_link,name
-                    else:
-                        print("No flexy link found.")
+                        maxstream_link = match.group(1)
+                        return maxstream_link,name
+                    
+                else:
+                        logger.info("No maxstream link found.")
             else:
                 continue 
+    return None,None
+async def get_maxstream(uprot_link,streams,language,client):
+    maxstream_link = await bypass_uprot(client,uprot_link)
+    if  maxstream_link:
+        streams = await maxstream(maxstream_link,client,streams,'OnlineSerieTV',language,proxies,ForwardProxy)
+    else:
+        if  maxstream_link == False:
+            return streams 
+        else:
+            streams['streams'].append({'name': f"{Name}",'title': f'{Icon}OnlineSerieTV\n▶️ Please do the captcha at /uprot in order to be able to play this content! \n Remember to refresh the sources!\nIf you recently did the captcha then dont worry, just refresh the sources', 'url': 'https://github.com/UrloMythus/MammaMia', 'behaviorHints': { 'bingeGroup': 'cb01'}})
 
+    return streams
 
-
-async def onlineserietv(id,client):
+async def onlineserietv(streams,id,client):
     try:
         general = await is_movie(id)
         ismovie = general[0]
@@ -131,22 +131,21 @@ async def onlineserietv(id,client):
         else:
             showname,date = get_info_tmdb(clean_id,ismovie,type)
         showname = showname.replace("'"," ")
-        flexy_link,name = await search(showname,date,client,ismovie,episode,season)
-        flexy_link = flexy_link.replace("fxf","fxe")
-        real_url = await client.head(ForwardProxy + flexy_link, headers=headers, impersonate = "chrome124", proxies = proxies)
-        real_url = real_url.url
-        final_url = await eval_solver(real_url,proxies, ForwardProxy, client)
-        return final_url,name
+        uprot_link,name = await search(showname,date,client,ismovie,episode,season)
+        if uprot_link != None:
+            streams = await get_maxstream(uprot_link,streams,'',client)
+        return streams
     except Exception as e:
-        print("MammaMia: Onlineserietv Failed",e)
-        return None,None
+        logger.info("MammaMia: Onlineserietv Failed")
+        logger.info(e)
+        return streams
     
 
 async def test_animeworld():
     from curl_cffi.requests import AsyncSession
     async with AsyncSession() as client:
-        test_id = "tt0206516:2:1"  # This is an example ID format
-        results = await onlineserietv(test_id, client)
+        test_id = "tt16426418"  # This is an example ID format
+        results = await onlineserietv({'streams': []},test_id, client)
         print(results)
 
 if __name__ == "__main__":
