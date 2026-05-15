@@ -343,7 +343,7 @@ async def uprot(request: Request):
         'image_url': image
     }
     
-    response = static.TemplateResponse(name='uprot.html',context=context)
+    response = static.TemplateResponse(name='uprot.html',context=context,request=request)
     if cookies:
         response.set_cookie(key='PHPSESSID', value=cookies.get('PHPSESSID'),httponly=True)
 
