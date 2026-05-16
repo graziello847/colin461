@@ -10,7 +10,7 @@ async def transform_mfp(mfp_stream_url,MFP_url,MFP_password,client):
     try:
         response = await client.get(mfp_stream_url)
         data = response.json()
-        if data['mediaflow_endpoint']:
+        if 'mediaflow_endpoint' in data:
             if data['mediaflow_endpoint'] == 'hls_manifest_proxy':
                 MFP_url += '/proxy/hls/manifest.m3u8'
             else:
