@@ -6,11 +6,15 @@ import urllib.parse
 level = config.LEVEL
 logger = setup_logging(level)
 
-async def transform_mfp(mfp_stream_url,client):
+async def transform_mfp(mfp_stream_url,MFP_url,MFP_password,client):
     try:
         response = await client.get(mfp_stream_url)
         data = response.json()
-        url = data['mediaflow_proxy_url'] + "?api_password=" + data['query_params']['api_password'] + "&d=" + urllib.parse.quote(data['destination_url'])
+        if data['mediaflow_endpoint'] == 'hls_manifest_proxy':
+            MFP_url += '/proxy/hls/manifest.m3u8'
+        else:
+            MFP_url += '/proxy/stream'
+        url = MFP_url + "?api_password=" + MFP_password + "&d=" + urllib.parse.quote(data['destination_url'])
         for i in data['request_headers']:
             url += f"&h_{i}={urllib.parse.quote(data['request_headers'][i])}"
         return url
@@ -23,5 +27,5 @@ async def build_mfp(MFP_CREDENTIALS,url,host,client):
     MFP_password = MFP_CREDENTIALS[1]
     url_mfp = f'{MFP_url}/extractor/video?api_password={MFP_password}&d={url}&host={host}&redirect_stream=false'
     #To build pieces together
-    url_mfp = await transform_mfp(url_mfp,client)
+    url_mfp = await transform_mfp(url_mfp,MFP_url,MFP_password,client)
     return url_mfp
